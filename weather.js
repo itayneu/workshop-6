@@ -10,25 +10,36 @@
 
 // Commander usage example for your reference:
 import chalk from "chalk";
+import fetch from "node-fetch";
 import { Command } from "commander";
+import dotenv from "dotenv";
 const program = new Command();
 
-program
-  .name("cli-calc")
-  .description("The best CLI calculator")
-  .version("1.0.0");
+dotenv.config();
+
+const apiKey = process.env.API_KEY;
+console.log(`API Key: ${apiKey}`);
+
+async function getTemp(city, scale) {
+  if (scale === "f") scale = "imperial";
+  else scale = "metric";
+  const response = await fetch(
+    `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=${scale}&appid=${apiKey}`
+  );
+  const data = await response.json();
+  return data;
+}
+
+program.name("weather").description("The best CLI weather").version("1.0.0");
 
 program
-  .command("add")
-  .description("Add two numbers")
-  .argument("<number>", "first operand")
-  .argument("<number>", "second operand")
-  .option("-c, --color <string>", "Result color", "white")
-  .action((firstNumber, secondNumber, options) => {
-    console.log(
-      chalk[options.color](
-        `Result: ${Number(firstNumber) + Number(secondNumber)}`
-      )
+  .command("get-temp")
+  .description("Get Temperatures ")
+  .argument("<city>", "city")
+  .option("-s, --scale <string>", "Scale", "c")
+  .action((city, options) => {
+    getTemp(city, options.scale).then((data) =>
+      console.log(`It's ${data.main.temp} degrees in ${data.name}`)
     );
   });
 
